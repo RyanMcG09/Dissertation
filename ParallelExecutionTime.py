@@ -27,9 +27,21 @@ if __name__ == '__main__':
     print('the program has finished in {} seconds'.format(total))
     count = count+1
 
-
+plt.figure(1)
 plt.plot(noOfCores, timeOfCores)
-plt.title("Number of Cores vs the Execution Time")
-plt.xlabel('Number of Cores')
-plt.ylabel('Execution Time')
+plt.title("Execution Time against the Number of Cores Used")
+plt.xlabel('Number of Cores Used')
+plt.ylabel('Execution Time (s)')
+plt.xticks([1,2,3,4])
 plt.savefig('times.png')
+
+speedup = [0,0,0,0]
+for i in range(4):
+  speedup[i] = timeOfCores[0]/timeOfCores[i]
+plt.figure(2)
+plt.plot(noOfCores, speedup)
+plt.title("Speedup against the Number of Cores Used")
+plt.xlabel('Number of Cores Used')
+plt.ylabel('Speedup')
+plt.xticks([1,2,3,4])
+plt.savefig('speedup.png')
