@@ -15,7 +15,6 @@ if __name__ == '__main__':
   count = 0
   for n in noOfCores:
     noOfIterations = math.ceil(20/n)
-    print(noOfIterations)
     start = time.perf_counter()
     for i in range(noOfIterations):
       for j in range(n):
