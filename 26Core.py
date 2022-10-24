@@ -9,8 +9,8 @@ def Sleeping():
   time.sleep(1)
 
 if __name__ == '__main__':
-  noOfCores = [1,2,4,6,8,10,12,14,16,18,20]
-  timeOfCores = [0,0,0,0,0,0,0,0,0,0,0]
+  noOfCores = [2,4,6,8,10,12,14,16,18,20,22,24,26]
+  timeOfCores = [0,0,0,0,0,0,0,0,0,0,0,0,0]
   pool = Pool()
   count = 0
   for n in noOfCores:
@@ -32,10 +32,10 @@ plt.plot(noOfCores, timeOfCores)
 plt.title("Execution Time against the Number of Cores Used")
 plt.xlabel('Number of Cores Used')
 plt.ylabel('Execution Time (s)')
-plt.xticks([1,2,4,6,8,10,12,14,16,18,20])
+plt.xticks([2,4,6,8,10,12,14,16,18,20,22,24,26])
 plt.savefig('times.png')
 
-speedup = [0,0,0,0,0,0,0,0,0,0,0]
+speedup = [0,0,0,0,0,0,0,0,0,0,0,0,0]
 for i in range(10):
   speedup[i] = timeOfCores[0]/timeOfCores[i]
 plt.figure(2)
@@ -43,5 +43,5 @@ plt.plot(noOfCores, speedup)
 plt.title("Speedup against the Number of Cores Used")
 plt.xlabel('Number of Cores Used')
 plt.ylabel('Speedup')
-plt.xticks([1,2,4,6,8,10,12,14,16,18,20])
+plt.xticks([2,4,6,8,10,12,14,16,18,20,22,24,26])
 plt.savefig('speedup.png')
