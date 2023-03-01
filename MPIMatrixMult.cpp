@@ -13,7 +13,7 @@
 
 //define variables
 using namespace std;
-const int n = 1000;
+const int n = 4096;
 double matrixA[n][n];
 double matrixB[n][n];
 double matrixC[n][n];
@@ -36,25 +36,28 @@ int main(int argc, char** argv)
 	double popTime = 0;
 	if (myrank == 0) {
 		popTime = populate_matrix(n);
-		testingMatrixValue();
+//		testingMatrixValue();
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	//Get the average time value over different number of cores for speedup
 	int from = myrank * (n / noProcessors);
 	int to = (myrank+1) * (n / noProcessors);
 	double endTimetot = 0;
+	double allTimes = 0;
 	auto begin = std::chrono::high_resolution_clock::now();
 	for (int j = 1; j <= numIterations; j++) {
 		MPI_Barrier(MPI_COMM_WORLD);
 		double itTime = parallel_for_multiplication_MPI(to,from, noProcessors, myrank);
+		if (myrank == 0){
+			allTimes += itTime;
+		}
 		printf("Time taken for core %d on iteration %d = %f \n",myrank,j,itTime);
 		
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
 	auto end = std::chrono::high_resolution_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
 	if (myrank == 0) {
-		printf("Average time taken for a %d x %d matrix over %d cores and over %d iterations is %f s\n", n, n, noProcessors, numIterations, std::chrono::duration<double>(elapsed).count());
+		printf("Average time taken for a %d x %d matrix over %d cores and over %d iterations is %f s\n", n, n, noProcessors, numIterations, allTimes/numIterations);
 	}
 	/*
 	if (myrank == 0)
@@ -165,12 +168,9 @@ double populate_matrix(int n) {
 }
 double parallel_for_multiplication_MPI(int to, int from, int p, int rank) {
 	//complete parallel matrix multiplication with mpi
-	const int mSize = 10;
-	int* mSizeP = const_cast <int*> (&mSize);
-	*mSizeP = p;
-	printf("computing slice %d (from row %d to %d)\n", rank, from, to - 1);
-	double ARows[n / mSize][n];
-	double CRows[n / mSize][n];
+//	printf("computing slice %d (from row %d to %d)\n", rank, from, to - 1);
+	double ARows[n / p][n];
+	double CRows[n / p][n];
 	MPI_Bcast(matrixB, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Scatter(matrixA, n * n / p, MPI_DOUBLE, ARows, n * n / p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -183,6 +183,7 @@ double parallel_for_multiplication_MPI(int to, int from, int p, int rank) {
 			}
 		}
 	}
+	MPI_Gather(CRows, n * n / p, MPI_DOUBLE, matrixC, n * n / p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	double endTime = MPI_Wtime();
 	double tt = endTime - startTime;
 	return tt;
