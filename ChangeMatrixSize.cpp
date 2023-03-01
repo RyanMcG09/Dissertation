@@ -11,7 +11,7 @@
 
 //define variables
 using namespace std;
-const int n = 1000;
+const int n = 4096;
 double matrixA[n][n];
 double matrixB[n][n];
 double matrixC[n][n];
@@ -25,7 +25,7 @@ void testingMatrixValue();
 int main() {
 	//set up local variables
 	const int maxCores = 32;
-	const int startPoint = 32;
+	const int startPoint = 2;
 	const int numIterations = 1;
 	double xy[maxCores - startPoint + 1][2];
 	populate_matrix(n);
@@ -88,7 +88,7 @@ void populate_matrix(int n) {
 }
 void testingMatrixValue() {
 	auto begin = std::chrono::high_resolution_clock::now();
-	printf("Testing without OpenMP\n");
+	printf("Testing without MPI\n");
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			matrixD[i][j] = 0;
@@ -105,11 +105,12 @@ void testingMatrixValue() {
 double parallel_for_multiplication(int n, int threads) {
 	//complete parallel matrix multiplication with omp
 	double startTime = omp_get_wtime();
-#pragma omp parallel for shared(matrixA,  matrixB, matrixC) schedule(dynamic) num_threads(threads)
+#pragma omp parallel for shared(matrixA,  matrixB, matrixC) schedule(static) num_threads(threads)
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			matrixC[i][j] = 0;
-			for (int k = 0; k < n; k++) {
+			for (int k = 0; k < n; k++) 
+			{
 				matrixC[i][j] = matrixC[i][j] + matrixA[i][k] * matrixB[k][j];
 			}
 		}
@@ -175,3 +176,4 @@ void print_matrix(double m[n][n])
 //g++ -fopenmp MatrixMultiplication.cpp -o anyname.cpp
 // ./anyname.cpp
 //python3 
+
