@@ -13,7 +13,7 @@
 
 //define variables
 using namespace std;
-const int n = 4096;
+const int n = 2;
 double matrixA[n][n];
 double matrixB[n][n];
 double matrixC[n][n];
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 		if (myrank == 0){
 			allTimes += itTime;
 		}
-		printf("Time taken for core %d on iteration %d = %f \n",myrank,j,itTime);
+		//printf("Time taken for core %d on iteration %d = %f \n",myrank,j,itTime);
 		
 	}
 	auto end = std::chrono::high_resolution_clock::now();
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 	if (myrank == 0) {
 		printf("Average time taken for a %d x %d matrix over %d cores and over %d iterations is %f s\n", n, n, noProcessors, numIterations, allTimes/numIterations);
 	}
-	/*
+	MPI_Barrier(MPI_COMM_WORLD);
 	if (myrank == 0)
 	{
 		printf("###Final Printing here###\n");
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 		printf("###C = ###\n");
 		print_matrix(matrixC);
 	}
-	*/
+	
 	
 	//save times to .txt file
 	if (myrank == 0) {
@@ -151,11 +151,15 @@ double populate_matrix(int n) {
 	//different seed for random values
 	srand(time(NULL));
 	auto begin = std::chrono::high_resolution_clock::now();
+	int count = 1;
 	//populate matrices
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
-			matrixA[i][j] = rand()%10+1;
-			matrixB[i][j] = rand()%10+1;
+			//matrixA[i][j] = rand()%10+1;
+			//matrixB[i][j] = rand()%10+1;
+			matrixA[i][j] = count;
+			matrixB[i][j] = count;
+			count = count + 1;
 		}
 	}
 	auto end = std::chrono::high_resolution_clock::now();
@@ -171,15 +175,44 @@ double parallel_for_multiplication_MPI(int to, int from, int p, int rank) {
 //	printf("computing slice %d (from row %d to %d)\n", rank, from, to - 1);
 	double ARows[n / p][n];
 	double CRows[n / p][n];
-	MPI_Bcast(matrixB, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	double BCols[n][n / p];
+
+	double matrixBT[n][n];
+
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			matrixBT[i][j] = matrixB[j][i];
+		}
+	}
+//	MPI_Bcast(matrixB, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Scatter(matrixA, n * n / p, MPI_DOUBLE, ARows, n * n / p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Scatter(matrixB, n * n / p, MPI_DOUBLE, BCols, n * n / p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
 	double startTime = MPI_Wtime();
+	
+	if (rank == 1){
+	printf("####First BCols####\n");
+	int i_, j_ = 0;
+	for (i_ = 0; i_ < n; i_++){
+		printf("\n\t| ");
+		for (j_ = 0; j_ < n; j_++){
+			printf("%2f",BCols[i_][j_]);
+		}
+	}
+	printf("\n####First ARows####\n");
+	for (i_ = 0; i_ < n/p; i_++){
+		printf("\n\t| ");
+		for (j_ = 0; j_ < n; j_++){
+			printf("%2f",ARows[i_][j_]);
+		}
+	}
+	}
 	for (int k = 0; k < n/p; k++) {
 		for (int i = 0; i < n; i++) {
 			CRows[k][i] = 0;
 			for (int j = 0; j < n; j++) {
-				CRows[k][i] = CRows[k][i] + ARows[k][j] * matrixB[j][i];
+				//CRows[k][i] = CRows[k][i] + ARows[k][j] * matrixB[j][i];
+				CRows[k][i] = CRows[k][i] + ARows[k][j] * BCols[j][i];
 			}
 		}
 	}
@@ -203,3 +236,4 @@ void print_matrix(double m[n][n])
 //g++ -fopenmp MatrixMultiplication.cpp -o anyname.cpp
 // ./anyname.cpp
 //python3 
+
